@@ -1,5 +1,4 @@
 import axios from 'axios';
-import cheerio from 'cheerio';
 import Parser from 'rss-parser';
 import Sentiment from 'sentiment';
 import UserAgent from 'user-agents';
@@ -19,10 +18,29 @@ export async function fetchRssSentiment(): Promise<number> {
       },
     },
     {
+      url: 'https://indianexpress.com/section/business/commodities/feed/',
+    },
+    {
+      url: 'https://www.thehindubusinessline.com/markets/gold/feeder/default.rss',
+    },
+    {
+      url: 'https://in.investing.com/rss/commodities_Metals.rss',
+    },
+    {
+      url: 'https://www.5paisa.com/rss/news.xml',
+    },
+    {
+      url: 'https://www.commodity-tv.com/ondemand/channel/gold/rss.xml',
+    },
+    {
+      url: 'https://www.commodity-tv.com/ondemand/channel/gold/rss.xml',
+    },
+    {
+      url: 'https://invezz.com/feed/?tag=gold',
+    },
+    {
       url: 'https://news.google.com/rss/search?q=gold+price+India&hl=en-IN&gl=IN&ceid=IN:en',
     },
-
-    // 'https://twitrss.me/twitter_search_to_rss.php?term=gold+price+india',
   ];
   let totalScore = 0;
   let count = 0;
@@ -32,9 +50,14 @@ export async function fetchRssSentiment(): Promise<number> {
       ? parser.parseString((await fetchRssFeedAsString(url, headers)).data)
       : parser.parseURL(url));
     for (const item of feed.items) {
-      if (item.title) {
-        const result = sentiment.analyze(item.title);
-        totalScore += result.score;
+      if (
+        item.title?.toLowerCase().includes('gold') ||
+        item.contentSnippet?.toLowerCase().includes('gold')
+      ) {
+        const result = sentiment.analyze(
+          `${item.title ?? ''}. ${item.contentSnippet ?? ''}`
+        );
+        totalScore += result.comparative;
         count++;
       }
     }
@@ -57,34 +80,8 @@ async function fetchRssFeedAsString(
   });
 }
 
-export async function fetchYahooFinanceSentiment(): Promise<number> {
-  const { data } = await axios.get(
-    'https://finance.yahoo.com/topic/commodities'
-  );
-  const $ = cheerio.load(data);
-  const headlines: string[] = [];
-
-  $('h3, h2, a').each((_, el) => {
-    const text = $(el).text().trim();
-    if (text.toLowerCase().includes('gold')) {
-      headlines.push(text);
-    }
-  });
-
-  let total = 0;
-  headlines.slice(0, 10).forEach((text) => {
-    const score = sentiment.analyze(text).score;
-    total += score;
-  });
-
-  return headlines.length ? total / headlines.length : 0;
-}
-
 export async function fetchAverageSentiment(): Promise<number> {
-  const allScores = [
-    await fetchRssSentiment(),
-    // await fetchYahooFinanceSentiment(),
-  ];
+  const allScores = [await fetchRssSentiment()];
 
   return allScores.reduce((a, b) => a + b, 0) / allScores.length;
 }

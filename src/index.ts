@@ -1,4 +1,4 @@
-import { fetchIbjaGoldPrice } from './services/price';
+import { fetchGoldPrice } from './services/price';
 import { fetchAverageSentiment } from './services/sentiment';
 import { fetchHistoricalRates } from './services/historical';
 import { predictPrice } from './services/predictor';
@@ -6,8 +6,7 @@ import { predictPrice } from './services/predictor';
 async function main(): Promise<void> {
   try {
     const [price, sentiment, history] = await Promise.all([
-    // const [history] = await Promise.all([
-      fetchIbjaGoldPrice(),
+      fetchGoldPrice(),
       fetchAverageSentiment(),
       fetchHistoricalRates(),
     ]);
@@ -15,21 +14,21 @@ async function main(): Promise<void> {
     const forecast = predictPrice(price, sentiment, history);
 
     // eslint-disable-next-line no-console
-    console.log('Current 24K price:', price);
+    console.info('Current 22K price:', price);
     // eslint-disable-next-line no-console
-    console.log('Avg sentiment:', sentiment.toFixed(2));
+    console.info('Avg sentiment:', sentiment.toFixed(2));
     // eslint-disable-next-line no-console
-    console.log(
+    console.info(
       'Historic slope (INR/day):',
       history.length > 1
         ? (
-            (history[history.length - 1].price - history[0].price) /
+            (history[history.length - 1].retailPrice - history[0].retailPrice) /
             (history.length - 1)
           ).toFixed(2)
         : 'N/A'
     );
     // eslint-disable-next-line no-console
-    console.log('Predicted tomorrow price:', forecast);
+    console.info('Predicted tomorrow price:', forecast);
 
     process.exit(0);
   } catch (err) {
